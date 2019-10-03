@@ -189,8 +189,8 @@
 		<!-- Nodes -->
 		<array-list
 			v-show="config.panel === 'nodes'"
-			:headings="['#', 'x', 'y', '', 'fx', '', 'fy', '', 'mz', '']"
-			:widths="[2.5, 3, 3, 1.25, 3, 1.25, 3, 1.25, 3, 2]"
+			:headings="config.analysisFlag === 0 ? ['#', 'x', 'y', '', 'fx', '', 'fy', '', 'mz'] : ['#', 'x', 'y', '', 'fx', '', 'fy']"
+			:widths="[2, 3, 3, 1.25, 3, 1.25, 3, 1.25, 3]"
 		>
 			<template slot="header">
 				<div style="display: flex; min-height: 26px">
@@ -207,6 +207,7 @@
 				:key="node.id"
 				:node="node"
 				:nodes="nodes"
+				:analysisFlag="config.analysisFlag"
 				@remove="removeNode(i)"
 				@mouseenter="node.active = true"
 				@mouseexit="node.active = false"
@@ -216,8 +217,8 @@
 		<!-- Elements -->
 		<array-list
 			v-show="config.panel === 'elements'"
-			:headings="['#', 'node i', 'node j', 'mat', 'sec', 'wx', 'wy', 'releases', '']"
-			:widths="[1.25, 3, 3, 4, 4, 3, 3, 2.5, 2]"
+			:headings="config.analysisFlag === 0 ? ['#', 'node i', 'node j', 'mat', 'sec', 'wx', 'wy', 'releases'] : ['#', 'node i', 'node j', 'mat', 'sec']"
+			:widths="[2, 3, 3, 4, 4, 3, 3, 2.5]"
 		>
 			<template slot="header">
 				<div style="display: flex; min-height: 26px">
@@ -237,6 +238,7 @@
 				:nodes="nodes"
 				:materials="materials"
 				:sections="sections"
+				:analysisFlag="config.analysisFlag"
 				@remove="removeElement(i)"
 			>
 			</element-row>
@@ -245,7 +247,7 @@
 		<!-- Materials -->
 		<array-list
 			v-show="config.panel === 'materials'"
-			:headings="['#', 'E', 'v', 'fy', 'γ', '']"
+			:headings="config.analysisFlag === 0 ? ['#', 'E', 'v', 'fy', 'γ'] : ['#', 'E']"
 			:widths="[4, 3, 3, 3, 3, 2]"		
 		>
 			<template slot="header">
@@ -267,6 +269,7 @@
 				v-for="(material, i) in materials"
 				:key="material.id"
 				:material="material"
+				:analysisFlag="config.analysisFlag"
 				@remove="removeMaterial(i)"
 			>
 			</material-row>
@@ -275,8 +278,8 @@
 		<!-- Sections -->
 		<array-list
 			v-show="config.panel === 'sections'"
-			:headings="['#', 'A', 'Iz', 'Ay', 'Zz', '']"
-			:widths="[4, 3, 3, 3, 3, 2]"			
+			:headings="config.analysisFlag === 0 ? ['#', 'A', 'Iz', 'Ay', 'Zz'] : ['#', 'A', 'Iz']"
+			:widths="[4, 3, 3, 3, 3]"			
 		>
 			<template slot="header">
 				<div style="display: flex; min-height: 26px">
@@ -297,6 +300,7 @@
 				v-for="(section, i) in sections"
 				:key="section.id"
 				:section="section"
+				:analysisFlag="config.analysisFlag"
 				@remove="removeSection(i)"
 			>
 			</section-row>
@@ -1837,7 +1841,7 @@ svg {
 	grid-template-columns: repeat(18, 1fr);
 	overflow: hidden;
 	grid-gap: 0;
-	margin: 0.25rem 0.5rem 0 0.5rem;
+	margin: 0;
 	padding: 0;
 	div {
 		text-align: center;

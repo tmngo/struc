@@ -20,18 +20,21 @@
       ></input-number>
 
       <input-number
+        v-show="analysisFlag === 0"
         class="cell row-options" 
         title="Poisson ratio, v"
         v-model="material.v"
       ></input-number>
 
       <input-number
+        v-show="analysisFlag === 0"
         class="cell row-options" 
         title="Yield stress, fy"
         v-model="material.Fy"
       ></input-number>
 
       <input-number 
+        v-show="analysisFlag === 0"
         class="cell row-options" 
         v-model="material.specificWeight"
       ></input-number>
@@ -81,7 +84,10 @@ export default {
     InputNumber, 
     InputNumberCheckbox,
   },
-  props: ['material'],
+  props: {
+    material: Object,
+    analysisFlag: Number,
+  },
 	data() {
 		return {
 			showOptions: false,

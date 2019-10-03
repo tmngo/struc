@@ -43,6 +43,7 @@
         v-model="section.Cw"
       ></input-number> -->
       <input-number
+        v-show="analysisFlag === 0"
         class="cell row-options" 
         title="Shear area, Ay"
         v-model="section.Ay"
@@ -53,6 +54,7 @@
         v-model="section.Az"
       ></input-number> -->
       <input-number
+        v-show="analysisFlag === 0"
         class="cell row-options" 
         title="Plastic section modulus, Zz"
         v-model="section.Zz"
@@ -95,7 +97,10 @@ export default {
     InputNumber, 
     InputNumberCheckbox,
   },
-  props: ['section'],
+  props: {
+    section: Object,
+    analysisFlag: Number,
+  },
 	data() {
 		return {
 			showOptions: false,

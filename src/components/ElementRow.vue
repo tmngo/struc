@@ -67,12 +67,14 @@
       </div>
 
       <input-number 
+        v-show="analysisFlag === 0"
         class="cell row-options" 
         :title="'distributed load'" 
         v-model="element.w[0]" 
         :step="0.1">
       </input-number>
       <input-number 
+        v-show="analysisFlag === 0"
         class="cell row-options" 
         :title="'distributed load'" 
         v-model="element.w[1]" 
@@ -80,11 +82,12 @@
       </input-number>
 
       <input-number-checkbox 
+        v-show="analysisFlag === 0"
         v-model="element.releases[0]" 
         style="min-width: 1.25rem"
       ></input-number-checkbox>
-
       <input-number-checkbox 
+        v-show="analysisFlag === 0"
         v-model="element.releases[1]" 
         style="min-width: 1.25rem"
       ></input-number-checkbox>
@@ -131,6 +134,7 @@ export default {
     nodes: Array,
     materials: Array,
     sections: Array,
+    analysisFlag: Number,
   },
 	data() {
 		return {

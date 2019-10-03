@@ -34,10 +34,12 @@
       ></input-number>
 
       <input-number-checkbox 
+        v-show="analysisFlag === 0"
         v-model="node.fixity[2]"
         style="min-width: 1.25rem"
       ></input-number-checkbox>
       <input-number 
+        v-show="analysisFlag === 0"
         class="cell row-options" 
         v-model="node.loads[2]"
       ></input-number>
@@ -74,7 +76,11 @@ export default {
     InputNumber, 
     InputNumberCheckbox,
   },
-  props: ['node', 'nodes'],
+  props: {
+    node: Object,
+    nodes: Array,
+    analysisFlag: Number,
+  },
 	data() {
 		return {
 			showOptions: false,
