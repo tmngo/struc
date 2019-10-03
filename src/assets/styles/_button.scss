@@ -1,0 +1,79 @@
+.btn {
+  display: inline-block;
+  font-weight: 400;
+  // color: #212529;
+  color: #cdcdcd;
+  text-align: center;
+  vertical-align: middle;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  background-color: transparent;
+  border: 1px solid transparent;
+  padding: .375rem .75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  border-radius: .25rem;
+  -webkit-transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,-webkit-box-shadow .15s ease-in-out;
+  transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,-webkit-box-shadow .15s ease-in-out;
+  transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+  transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out,-webkit-box-shadow .15s ease-in-out;
+}
+
+.btn:hover {
+  // color: #212529;
+  color: #fff;
+  text-decoration: none;
+}
+
+.btn.focus, .btn:focus {
+  outline: 0;
+  // -webkit-box-shadow: 0 0 0 .2rem rgba(0,123,255,.25);
+  // box-shadow: 0 0 0 .2rem rgba(0,123,255,.25);
+}
+
+.btn-outline-dark:not(:disabled):not(.disabled).active, 
+.btn-outline-dark:not(:disabled):not(.disabled):active, 
+.show > .btn-outline-dark.dropdown-toggle {
+  color: #fff;
+  background-color: rgba(black, 0.7);
+  border: 1px solid rgba(white, 0.2);
+}
+
+.btn-outline-dark.focus, 
+.btn-outline-dark:focus {
+  // -webkit-box-shadow: 0 0 0 .2rem rgba(52,58,64,.5);
+  // box-shadow: 0 0 0 .2rem rgba(52,58,64,.5);
+  border: solid 1px #3e3e3e;
+}
+
+.btn-outline-dark:hover {
+  color: #fff;
+  // background-color: #343a40;
+  background-color: rgba(black, 0.2);
+  border: 1px solid rgba(white, 0.2);
+  // border-color: #343a40;
+}
+
+.btn.toggled {
+  background-color: rgba(black, 0.7);
+  border: 1px solid rgba(white, 0.2);
+}
+
+.btn-outline-danger {
+  color: $red;
+}
+
+.btn-outline-danger:hover {
+  color: #fff;
+  background-color: $danger;
+  border-color: #343a40;
+}
+
+[type="button"]:not(:disabled), 
+[type="reset"]:not(:disabled), 
+[type="submit"]:not(:disabled), 
+button:not(:disabled) {
+  cursor: pointer;
+}

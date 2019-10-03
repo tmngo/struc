@@ -1,0 +1,107 @@
+@font-face {
+  font-family: 'icomoon';
+  src: url('../fonts/icons-struc.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+[class^="icon-"], [class*=" icon-"] {
+  /* use !important to prevent issues with browser extensions that change fonts */
+  font-family: 'icomoon' !important;
+  speak: none;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-center-focus-weak:before {
+  content: "\e916";
+}
+.icon-crop-free:before {
+  content: "\e91b";
+}
+.icon-subdivide:before {
+  content: "\e90f";
+}
+.icon-settings-outline:before {
+  content: "\e900";
+}
+.icon-draw-node-outline:before {
+  content: "\e901";
+}
+.icon-section:before {
+  content: "\e918";
+}
+.icon-bricks:before {
+  content: "\e917";
+}
+.icon-elements:before {
+  content: "\e902";
+}
+.icon-big-nodes:before {
+  content: "\e90d";
+}
+.icon-blocks:before {
+  content: "\e90e";
+}
+.icon-create-elem-outline:before {
+  content: "\e910";
+}
+.icon-material:before {
+  content: "\e912";
+}
+.icon-nodes:before {
+  content: "\e913";
+}
+.icon-pan-outline:before {
+  content: "\e914";
+}
+.icon-scatter:before {
+  content: "\e915";
+}
+.icon-create:before {
+  content: "\e908";
+}
+.icon-create-elem:before {
+  content: "\e909";
+}
+.icon-create-node:before {
+  content: "\e90a";
+}
+.icon-pan-tool:before {
+  content: "\e90b";
+}
+.icon-settings:before {
+  content: "\e90c";
+}
+.icon-add:before {
+  content: "\e903";
+}
+.icon-close:before {
+  content: "\e904";
+}
+.icon-delete:before {
+  content: "\e905";
+}
+.icon-expand-less:before {
+  content: "\e906";
+}
+.icon-expand-more:before {
+  content: "\e907";
+}
+.icon-subtract:before {
+  content: "\e911";
+}
+.icon-unfold-less:before {
+  content: "\e919";
+}
+.icon-unfold-more:before {
+  content: "\e91a";
+}
