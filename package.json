@@ -1,14 +1,14 @@
 {
-  "name": "strut",
+  "name": "struc",
   "version": "1.0.0",
-  "description": "A Vue.js project",
+  "description": "A 2D linear structural analysis tool.",
   "author": "Tim Ngo <ngotm.tn@gmail.com>",
   "private": true,
   "scripts": {
     "dev": "webpack-dev-server --inline --progress --config build/webpack.dev.conf.js",
     "start": "npm run dev",
     "build": "node build/build.js",
-    "deploy": "node ./node_modules/vue-gh-pages/index.js"
+    "deploy": "node ./node_modules/vue-gh-pages/index.js -p"
   },
   "dependencies": {
     "lodash": "^4.17.15",
