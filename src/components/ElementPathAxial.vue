@@ -116,7 +116,7 @@ export default {
 			if (this.element.active) {
 				return '#ffff00';
 			}
-			if (this.trussColoring) {
+			if (this.trussColoring && !math.equal(this.maxAxial, 0)) {
 				return `rgb(${
 						this.elementForce < 0.001 ? 255 * (1 + this.elementForce / this.maxAxial)**2 : 255}, ${
 						this.elementForce > -0.001 ? 255 * (1 - this.elementForce / this.maxAxial)**2 : 255 * (1 + 1 * this.elementForce / this.maxAxial)}, ${
@@ -135,9 +135,6 @@ export default {
 		},
 	},
 	methods: {
-		/* segmentToString(x, y) {
-  		return [x.b.toFixed(2), y.b.toFixed(2), x.c.toFixed(2), y.c.toFixed(2), x.d.toFixed(2), y.d.toFixed(2)].join(",");
-		}, */
 	}
 }
 </script>

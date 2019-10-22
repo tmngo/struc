@@ -1,6 +1,9 @@
 <template>
-  <li class="list-item" @mouseenter="element.active = true" @mouseleave="element.active = false">
-    
+  <li 
+    class="list-item" 
+    @mouseenter="element.active = true" 
+    @mouseleave="element.active = false"
+  >
     <div class="list-item-row">
 
       <div class="cell">
@@ -144,15 +147,6 @@ export default {
 	computed: {
 		optionsArrow () {
 			return this.showOptions ? "\u25B2" : "\u25BC";
-		},
-		dX () {
-			return this.element.end.x - this.element.start.x;
-		},
-		dY () {
-			return this.element.end.y - this.element.start.y;
-		},
-		length () {
-			return math.sqrt(Math.pow(this.dX, 2) + Math.pow(this.dY, 2));
 		},
 	},
 }

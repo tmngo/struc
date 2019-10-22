@@ -12,39 +12,39 @@
 			<div id="canvas-header" class="bar">
 				<div class="home"><a href="https://timmngo.github.io">timmngo.github.io</a></div>
 				<button 
-						class="btn btn-outline-dark" 
-						:class="{ toggled : (config.mode === 'navigate') }"
-						title="Pan"
-						@click="config.mode='navigate'"
+					class="btn btn-outline-dark" 
+					:class="{ toggled : (config.mode === 'navigate') }"
+					title="Pan"
+					@click="config.mode='navigate'"
 				><i class="icon-pan-outline"></i></button>
 				<button 
-						class="btn btn-outline-dark" 
-						title="Zoom fit"
-						@click="zoomFit"
+					class="btn btn-outline-dark" 
+					title="Zoom fit"
+					@click="zoomFit"
 				><i class="icon-crop-free"></i></button>
 				<button 
-						class="btn btn-outline-dark" 
-						:class="{ toggled : (config.mode === 'draw-node') }"
-						title="Draw node"
-						@click="config.mode='draw-node'"
+					class="btn btn-outline-dark" 
+					:class="{ toggled : (config.mode === 'draw-node') }"
+					title="Draw node"
+					@click="config.mode='draw-node'"
 				><i class="icon-draw-node-outline"></i></button>
 				<button 
-						class="btn btn-outline-dark" 
-						:class="{ toggled : (config.mode === 'draw-elem') }"
-						title="Draw element"
-						@click="config.mode='draw-elem'"
+					class="btn btn-outline-dark" 
+					:class="{ toggled : (config.mode === 'draw-elem') }"
+					title="Draw element"
+					@click="config.mode='draw-elem'"
 				><i class="icon-create-elem-outline"></i></button>
 				<button 
-						class="btn btn-outline-dark" 
-						title="Settings"
-						@click="config.display=!config.display;config.mode='navigate'"
+					class="btn btn-outline-dark" 
+					title="Settings"
+					@click="config.display=!config.display;config.mode='navigate'"
 				><i class="icon-settings"></i></button>
 				
 			</div>
 		</canvas-settings>
 
 		<!-- Canvas -->
-		<div id="canvas-container"
+		<!-- <div id="canvas-container"
 			@mousemove.left="panMove($event)" 
 			@mousedown.left="handleMouseDown" 
 			@mousedown.middle="panOn" 
@@ -54,72 +54,78 @@
 			@mouseup="panOff"
 			@mouseleave="panOff"
 			@touchend="panOff"
-			>
-		<svg 
-			id="canvas" 
-			ref="canvas" 
-			class="select-none"
-			draggable="false"
-			@dragstart.prevent	
 		>
-			<rect 
-				id="rect-canvas" 
-				width="100%" 
-				height="100%" 
-			/>
+			
+			<svg 
+				id="canvas" 
+				ref="canvas" 
+				class="select-none"
+				draggable="false"
+				@dragstart.prevent	
+			>
+				<rect 
+					id="rect-canvas" 
+					width="100%" 
+					height="100%" 
+				/>
+				<circle 
+					v-show="config.mode==='draw-node'"
+					:cx="cursor.x" 
+					:cy="cursor.y" 
+					:r="2" 
+					fill="#ffffff"
+				/>
+				<path 
+					v-show="config.mode==='draw-elem' && drawElem.ends[0] !== null"
+					stroke="white"
+					stroke-dasharray="3"
+					:d="drawElemDef"
+				/>
+				<path v-show="config.axes" class="axis axis-x" :d="axisXDef"/>
+				<path v-show="config.axes" class="axis axis-y" :d="axisYDef"/>
 
-			<circle 
-				v-show="config.mode==='draw-node'"
-				:cx="cursor.x" 
-				:cy="cursor.y" 
-				:r="2" 
-				fill="#ffffff"
-			/>
+				<component
+					:is="(config.analysisFlag=== 1) ? 'ElementPathAxial' : 'ElementPath'"
+					v-for="(elem, i) in elements"
+					:key="elem.id"
+					:element="elem"
+					:l="elementLengths[i]"
+					:endNodes="[nodes[elem.ends[0]], nodes[elem.ends[1]]]"
+					:element-force="elementAxials[i]"
+					:end-forces="elementForces[i]"
+					:displacements="elementDisplacements[i]"
+					:view="config"
+					:max-axial="elementMaxAxial"
+					:moment-scale="momentDiagramAutoScale"
+					:shear-scale="shearDiagramAutoScale"
+					:transform="elementTransformations[i]"
+					:colors="colors"
+					:trussColoring="config.trussColoring"
+					@selection="activeElement = $event"
+				></component>
+				<component
+					:is="(config.analysisFlag=== 1) ? 'NodeCircleAxial' : 'NodeCircle'"
+					v-for="(node, i) in nodes"
+					:key="node.id"
+					:node="node"
+					:i="i"
+					:displacements="displacements[i]"
+					:reactions="reactions[i]"
+					:view="config"
+					:colors="colors"
+					@selection="handleMouseDown"
+				></component>
+			</svg>
+		</div> -->
 
-			<path 
-				v-show="config.mode==='draw-elem' && drawElem.ends[0] !== null"
-				stroke="white"
-				stroke-dasharray="3"
-				:d="drawElemDef"
-			/>
-
-			<path v-show="config.axes" class="axis axis-x" :d="axisXDef"/>
-			<path v-show="config.axes" class="axis axis-y" :d="axisYDef"/>
-
-			<component
-				:is="(config.analysisFlag=== 1) ? 'ElementPathAxial' : 'ElementPath'"
-				v-for="(elem, i) in elements"
-				:key="elem.id"
-				:element="elem"
-				:l="elementLengths[i]"
-				:endNodes="[nodes[elem.ends[0]], nodes[elem.ends[1]]]"
-				:element-force="elementAxials[i]"
-				:end-forces="elementForces[i]"
-				:displacements="elementDisplacements[i]"
-				:view="config"
-				:max-axial="elementMaxAxial"
-				:moment-scale="momentDiagramAutoScale"
-				:shear-scale="shearDiagramAutoScale"
-				:transform="elementTransformations[i]"
-				:colors="colors"
-				:trussColoring="config.trussColoring"
-				@selection="activeElement = $event"
-			></component>
-			<component
-				:is="(config.analysisFlag=== 1) ? 'NodeCircleAxial' : 'NodeCircle'"
-				v-for="(node, i) in nodes"
-				:key="node.id"
-				:node="node"
-				:i="i"
-				:displacements="displacements[i]"
-				:reactions="reactions[i]"
-				:view="config"
-				:colors="colors"
-				@selection="handleMouseDown"
-			></component>
-		</svg>
-		</div>
-
+		<babylon-canvas  
+			:config="config"
+			:nodes="nodes"
+			:elements="elements"
+			:forces-axial="elementAxials"
+			:force-axial-max="elementMaxAxial"
+			:forces-end="elementForces"
+		></babylon-canvas>
 
 		<!-- Properties -->
 		<div class="properties">
@@ -138,10 +144,6 @@
 					{{ -Math.round((cursor.y - config.y) / config.scale / config.snapIncrement) * config.snapIncrement }}
 				</div>
 				<label>Snap increment</label>
-				<!-- <input-number
-					v-model="config.snapIncrement"
-					:min="1"
-				></input-number> -->
 				<input
 					type="number"
 					min="1"
@@ -308,12 +310,6 @@
 
 		<!-- Sidebar -->
 		<div class="sidebar bar">
-			<!-- <button 
-				title="Hide"
-				class="btn btn-outline-dark" 
-				:class="{ toggled : (config.panel === 'hide') }"
-				@click="config.panel='hide'"
-			><i class="icon-close"></i></button> -->
 			<button 
 				title="Nodes"
 				class="btn btn-outline-dark" 
@@ -344,40 +340,40 @@
 
 <script>
 import math from 'mathjs'
-import _ from 'lodash'
-import CanvasSettings from './components/CanvasSettings'
+import debounce from 'lodash.debounce'
+
 import ArrayList from './components/ArrayList'
-import InputNumber from './components/InputNumber'
-
-import RowHeader from './components/RowHeader'
-import NodeRow from './components/NodeRow'
-import NodeRowAdd from './components/NodeRowAdd'
-import ElementRow from './components/ElementRow'
-import ElementRowAdd from './components/ElementRowAdd'
-import MaterialRow from './components/MaterialRow'
-import SectionRow from './components/SectionRow'
-
-import NodeCircle from './components/NodeCircle'
-import NodeCircleAxial from './components/NodeCircleAxial'
+import BabylonCanvas from './components/BabylonCanvas'
+import CanvasSettings from './components/CanvasSettings'
 import ElementPath from './components/ElementPath'
 import ElementPathAxial from './components/ElementPathAxial'
+import ElementRow from './components/ElementRow'
+import ElementRowAdd from './components/ElementRowAdd'
+import InputNumber from './components/InputNumber'
+import MaterialRow from './components/MaterialRow'
+import NodeCircle from './components/NodeCircle'
+import NodeCircleAxial from './components/NodeCircleAxial'
+import NodeRow from './components/NodeRow'
+import NodeRowAdd from './components/NodeRowAdd'
+import SectionRow from './components/SectionRow'
 
 export default {
   name: 'App',
   components: {
-    CanvasSettings,
 		ArrayList,
-		InputNumber,
-    NodeRow,
-    NodeRowAdd,
+		BabylonCanvas,
+    CanvasSettings,
+    ElementPath,
+		ElementPathAxial,
 		ElementRow,
     ElementRowAdd,
+		InputNumber,
 		MaterialRow,
-		SectionRow,
     NodeCircle,
     NodeCircleAxial,
-    ElementPath,
-    ElementPathAxial,
+    NodeRow,
+    NodeRowAdd,
+		SectionRow,
   },
   data() { 
     return {
@@ -706,6 +702,7 @@ export default {
 
 		dF () {
 			if (this.isUnstable) return null
+			// return this.debounceSolve();
 			return math.lusolve(this.kFF, math.subtract(this.pF, this.fefF))
 		},
 
@@ -843,10 +840,10 @@ export default {
 		this.initStructure();
 	},
 	mounted: function () {
-		this.config.canvasW = this.getCanvasWidth();
-		this.config.canvasH = this.getCanvasHeight();
-		this.config.x = this.config.canvasW / 2;
-		this.config.y = this.config.canvasH / 2;
+		// this.config.canvasW = this.getCanvasWidth();
+		// this.config.canvasH = this.getCanvasHeight();
+		// this.config.x = this.config.canvasW / 2;
+		// this.config.y = this.config.canvasH / 2;
 		window.addEventListener("resize", this.resizeWindow);
 	},
 	methods: {
@@ -896,33 +893,14 @@ export default {
 
 			// bridge
 			this.addNodes([
-				{
-					coords: [0, 0], 
-					fixity: [true, true, false],
-				},
-				{
-					coords: [250, 0],
-				},
-				{
-					coords: [250, 250],
-				},
-				{
-					coords: [500, 0],
-					loads: [10, -20, 0]
-				},
-				{
-					coords: [500, 250],
-				},
-				{
-					coords: [750, 0],
-				},
-				{
-					coords: [750, 250],
-				},
-				{
-					coords: [1000, 0],
-					fixity: [false, true, false],
-				},
+				{coords: [0, 0], fixity: [true, true, false],},
+				{coords: [250, 0],},
+				{coords: [250, 250],},
+				{coords: [500, 0],loads: [10, -20, 0]},
+				{coords: [500, 250],},
+				{coords: [750, 0],},
+				{coords: [750, 250],},
+				{coords: [1000, 0],fixity: [false, true, false],},
 			]);
 			this.addElement({ ends: [0, 1]});
 			this.addElement({ ends: [0, 2]});
@@ -952,8 +930,8 @@ export default {
 			let dx = this.nodes[elem.ends[1]].coords[0] - this.nodes[elem.ends[0]].coords[0];
 			let dy = this.nodes[elem.ends[1]].coords[1] - this.nodes[elem.ends[0]].coords[1];
 			let l = this.elementLengths[i];
-			let c = math.divide(dx, l);
-			let s = math.divide(dy, l);
+			let c = dx / l;
+			let s = dy / l;
 			if (this.config.analysisFlag === 1) {
 				return [
 				[c, s, 0, 0], 
@@ -993,7 +971,8 @@ export default {
 					[a, -a],
 					[-a, a],
 				];
-				return math.multiply(k, math.divide(e, l));
+				return math.multiply(k, e / l);
+				// return math.multiply(k, math.divide(e, l));
 			}
 
 			if (elem.releases[0] && elem.releases[1]) {	// pinned-pinned
@@ -1033,7 +1012,7 @@ export default {
 					[0, il, i2, 0, -il, i4],
 				]
 			}
-			return math.multiply(k, math.divide(e, l));
+			return math.multiply(k, e / l);
 		},
 
 		getElementKGlobal(elem, i) {
@@ -1153,12 +1132,12 @@ export default {
 		},
 
 		isJSON(str) {
-			if( typeof( str ) !== 'string' ) return false;
+			if (typeof(str) !== 'string') return false;
 			try {
-					JSON.parse(str);
-					return true;
+				JSON.parse(str);
+				return true;
 			} catch (e) {
-					return false;
+				return false;
 			}
 		},
 
@@ -1177,7 +1156,7 @@ export default {
 		},
 
 		addNodes(nodes) {
-			for (let i=0; i < nodes.length; i++) {
+			for (let i = 0; i < nodes.length; i++) {
 				this.addNode(nodes[i]);
 			}
 		},
@@ -1285,8 +1264,8 @@ export default {
 		/**************/
 
 		resizeWindow() {
-			this.config.canvasW = this.getCanvasWidth();
-			this.config.canvasH = this.getCanvasHeight();
+			// this.config.canvasW = this.getCanvasWidth();
+			// this.config.canvasH = this.getCanvasHeight();
 			// this.config.x = this.config.canvasW / 2;
 			// this.config.y = this.config.canvasH / 2;
 		},
@@ -1300,10 +1279,12 @@ export default {
 		},
 
 		getCanvasWidth() {
+			// return 200
 			return parseFloat(window.getComputedStyle(this.$refs.canvas)["width"]);
 		},
 
 		getCanvasHeight() {
+			// return 200
 			return parseFloat(window.getComputedStyle(this.$refs.canvas)["height"]);
 		},
 
@@ -1451,21 +1432,13 @@ export default {
 <style lang="scss">
 @import "@/assets/styles/_variables.scss";
 @import "@/assets/styles/_reboot.scss";
-// @import 'bootstrap/dist/css/bootstrap.min.css';
 @import "@/assets/styles/_button.scss";
 @import "@/assets/styles/_input.scss";
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
 body {
-	color: $dark-warm;
 	display: flex;
 	flex-direction: column;
-	font-family: "Source Sans Pro", "Helvetica Neue LT Std", Helvetica, Arial, sans-serif;
+	font-family: "Fira Sans Condensed", sans-serif;
 	height: 100vh;
 	width: 100vw;
 }
@@ -1543,7 +1516,7 @@ body {
 		height: 100%;
 		width: 100%;
 		position: absolute;
-		border: solid purple 5px;
+		// border: solid purple 5px;
 		pointer-events: none;
 		top: 0;
 		bottom: 0;
@@ -1566,9 +1539,6 @@ body {
 		padding: .5rem 1rem;
 		pointer-events: auto;
 		width: 100vw;
-		div {
-			// outline: solid red 1px;
-		}
 		input[type=number] {
 			height: 1.5rem;
 		}
@@ -1578,9 +1548,7 @@ body {
 svg {
 	#rect-canvas {
 		fill: #3a3a3a;
-		// fill: $gray-800; 
 		stroke: none;
-		// right: 0
 	}	
 	.axis {
 		stroke-dasharray: 2, 3;
@@ -1617,7 +1585,6 @@ svg {
 		align-items: center;
 		display: grid;
 		grid-template-columns: max-content minmax(3rem, 4rem);
-		// box-shadow: 0 1px 2px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
 		span {
 			grid-column: span 2;
 		}
@@ -1661,7 +1628,6 @@ svg {
 	color: #fff;
 	margin-top: 0.5rem;
 	padding: 0.125rem;
-	// box-shadow: 0 1px 2px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
 	width: max-content;
 }
 
@@ -1674,9 +1640,6 @@ svg {
 	pointer-events: none;
 	.list-body {
 		align-items: end;
-		// max-width: 20rem;
-		// overflow-x: scroll;
-		// overflow-y: hidden;
 		align-self: flex-end;
 		display: flex;
 		flex-direction: column;
@@ -1699,12 +1662,7 @@ svg {
 	}
 }
 
-
-
-
-
-.list-header{
-	// background-color: $dark-cool;
+.list-header {
 	background-color: #202020;
 	color: white;
 	display: flex;
@@ -1754,19 +1712,12 @@ svg {
 		min-width: 3rem;
 	}
 	.list-item {
-		// padding: 0.1rem 0.2rem;
 		padding: 0;
 		background-color: #323232;
-		// margin: 0.25rem 0rem;
 		margin: 0;
 		border: 1px solid #505050;
 		border-bottom: none;
-		// border-radius: 0.125rem;
-		// box-shadow: 0 1px 2px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
 		width: min-content;
-
-		
-
 		.list-item-row {
 			align-items: center;
 			display: grid;
@@ -1782,8 +1733,8 @@ svg {
 				}
 				input[type='number'] {
 					-moz-appearance: textfield !important;
-					border: none;
-					outline: 1px solid #3e3e3e;
+					border: 1px #3e3e3e;
+					border-style: none solid none solid;
 					&:hover {
 						-moz-appearance: textfield !important;
 					}
@@ -1818,8 +1769,6 @@ svg {
 		}
 	}
 }
-
-
 
 .list-menu {
 	border: solid 1px red;
@@ -1896,34 +1845,6 @@ svg {
 	-ms-user-select: none;
 }
 
-/***************/
-/* Transitions */
-/***************/
-
-// .slide-fade-enter-active, 
-// .slide-fade-leave-active {
-// 	transition: all .3s ease;
-// }
-
-// .slide-fade-enter, 
-// .slide-fade-leave-to {
-// 	opacity: 0;
-// 	transform: translateY(-30px);
-// }
-
-// .list-enter, 
-// .list-leave-to {
-// 	opacity: 0;
-// }
-
-// .list-enter {
-// 	transform: translateY(-2rem);
-// }
-
-// .list-leave-active {
-// 	position: absolute;
-// }
-
 @media screen and (max-width: 940px) {
 	#app {
 		grid-template: 
@@ -1974,9 +1895,7 @@ svg {
 				border-bottom: solid 1px rgba(255, 255, 255, 0.1);
 			}
 		}
-		
 	}
-	
 }
 
 </style>

@@ -6,16 +6,15 @@
 			</div>
 
 			<div class="list-body">
-        
-    		<transition-group name="list" tag="ul" class="list-rows">
+        <ul class="list-rows">
           <row-header
-          :key="headings[0] + headings[1] + headings[2]"
-          class="row-header"
-          :headings="headings"
-          :widths="widths"
-        ></row-header>
+            :key="headings[0] + headings[1] + headings[2]"
+            class="row-header"
+            :headings="headings"
+            :widths="widths"
+          ></row-header>
           <slot></slot>
-				</transition-group>
+        </ul>
   		</div>
 
   </div>

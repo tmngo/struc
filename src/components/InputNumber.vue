@@ -44,7 +44,7 @@
 </template>
 
 <script>
-import _ from 'lodash'
+import debounce from 'lodash.debounce'
 
 export default {
   name: 'InputNumber',
@@ -68,12 +68,9 @@ export default {
 			showSpinner: false,
 			timeout: null,
 			interval: null,
-			debounceInput: _.debounce(function(evt) {
+			debounceInput: debounce((evt) => {
 				this.valueLocal = (evt.target.value === '') ? 0 : parseFloat(evt.target.value) 
 			}, 250),
-			debounceIncrement: _.debounce(function(x) {
-				this.valueLocal += x;
-			}, 500).bind(this),
 		};
 	},
 	computed: {
@@ -93,15 +90,11 @@ export default {
 	},
 	methods: {
 		increment(step) {
-			// let sum = 0;
-			// sum += step;
 			this.valueLocal += step;
 			this.timeout = setTimeout(() => {
 				this.interval = setInterval(() => { 
-					this.valueLocal += step;
-					// sum += step;
-					// this.debounceIncrement(sum);
-				}, 15);
+					this.valueLocal += step * 10;
+				}, 30);
 			}, 250);
 			
 		}, 
@@ -116,7 +109,6 @@ export default {
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped lang="scss">
 .btn-spinner {
-	// background-color: rgba(255,255,255,0.6); 
 	background-color: none;
 	z-index: 30;
 	display: grid !important; 
@@ -128,23 +120,17 @@ export default {
 		line-height: 1em !important;
 		margin: 0 !important;
 		padding: 0 !important; 
-		// border-color: rgba(90,90,90,0.6);
-		// color: rgba(90,90,90,0.6);
 		color: #cdcdcd;
 		&:hover {
 			background-color: #343a40;
 		}
+		&:first-child {
+			margin-bottom: -1px !important;
+			border-radius: 0; 
+		}
+		&:last-child {
+			border-top: none;
+		}
 	}
-	button:first-child {
-		// border-radius: 0 0.2rem 0 0 !important;
-		margin-bottom: -1px !important;
-		border-radius: 0; 
-	}
-	button:last-child {
-		// border-radius: 0 0 0.2rem 0 !important;
-		border-top: none;
-		
-	}
-	
 }
 </style>
