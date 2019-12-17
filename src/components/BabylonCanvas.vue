@@ -293,7 +293,7 @@ export default {
       for (let i = 0; i < this.elements.length; i++) {
         let e = this.elements[i];
         let f = this.forcesAxial[i];
-        let color = new BABYLON.Color4(0.1, 0.1, 0.1);
+        let color = new BABYLON.Color4(0.8, 0.8, 0.8);
         if (e.active) {
           color = new BABYLON.Color4(1, 1, 0.5);
         } else if (this.config.analysisFlag === 1 && this.config.trussColoring && !math.equal(this.forceAxialMax, 0)) {
@@ -359,7 +359,7 @@ export default {
     createScene() {
       // Create the scene space
       this.scene = new BABYLON.Scene(this.engine);
-      this.scene.clearColor = BABYLON.Color3.FromHexString("#ffffff")
+      this.scene.clearColor = BABYLON.Color3.FromHexString("#202020")
 
       // Add a camera to the scene and attach it to the canvas
       this.initCamera();
