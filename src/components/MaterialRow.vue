@@ -19,25 +19,25 @@
         v-model="material.E"
       ></input-number>
 
-      <input-number
+      <!-- <input-number
         v-show="analysisFlag === 0"
         class="cell row-options" 
         title="Poisson ratio, v"
         v-model="material.v"
-      ></input-number>
+      ></input-number> -->
 
-      <input-number
+      <!-- <input-number
         v-show="analysisFlag === 0"
         class="cell row-options" 
         title="Yield stress, fy"
         v-model="material.Fy"
-      ></input-number>
+      ></input-number> -->
 
-      <input-number 
+      <!-- <input-number 
         v-show="analysisFlag === 0"
         class="cell row-options" 
         v-model="material.specificWeight"
-      ></input-number>
+      ></input-number> -->
 
       <!-- <input-number
         class="cell row-options" 

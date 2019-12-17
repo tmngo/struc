@@ -15,7 +15,7 @@
 					class="btn btn-outline-dark" 
 					:class="{ toggled : (config.mode === 'navigate') }"
 					title="Pan"
-					@click="config.mode='navigate'"
+					@click="config.mode='navigate';config.display=false"
 				><i class="icon-pan-outline"></i></button>
 				<button 
 					class="btn btn-outline-dark" 
@@ -26,13 +26,13 @@
 					class="btn btn-outline-dark" 
 					:class="{ toggled : (config.mode === 'draw-node') }"
 					title="Draw node"
-					@click="config.mode='draw-node'"
+					@click="config.mode='draw-node';config.display=false"
 				><i class="icon-draw-node-outline"></i></button>
 				<button 
 					class="btn btn-outline-dark" 
 					:class="{ toggled : (config.mode === 'draw-elem') }"
 					title="Draw element"
-					@click="config.mode='draw-elem'"
+					@click="config.mode='draw-elem';config.display=false"
 				><i class="icon-create-elem-outline"></i></button>
 				<button 
 					class="btn btn-outline-dark" 
@@ -125,6 +125,16 @@
 			:forces-axial="elementAxials"
 			:force-axial-max="elementMaxAxial"
 			:forces-end="elementForces"
+			:materials="materials"
+			:sections="sections"
+			:diagram-scales="diagramScales"
+			:node-reactions="reactions"
+			:node-displacements="displacements"
+			:element-displacements="elementDisplacementsLocal"
+			:input="input"
+			@pointerdown="handleMouseDown2" 
+			@pointermove="handleMouseMove"
+			ref="canvasContainer"
 		></babylon-canvas>
 
 		<!-- Properties -->
@@ -137,11 +147,11 @@
 				<span>Draw node</span>
 				<label>X</label>
 				<div> <!-- world = screen / scale -->
-					{{ Math.round((cursor.x - config.x) / config.scale / config.snapIncrement) * config.snapIncrement }}
+					{{ cursor.x }}
 				</div>
 				<label>Y</label>
 				<div>
-					{{ -Math.round((cursor.y - config.y) / config.scale / config.snapIncrement) * config.snapIncrement }}
+					{{ -cursor.y }}
 				</div>
 				<label>Snap increment</label>
 				<input
@@ -157,9 +167,7 @@
 			>
 				<span>Draw element</span>
 				<label>Material</label>
-				<select 
-					v-model="drawElem.material"
-				>
+				<select v-model="drawElem.material">
 					<option 
 						v-for="(mat, i) in materials" 
 						:key="mat.id"
@@ -167,9 +175,7 @@
 					>{{ mat.n }}</option>	
 				</select>
 				<label>Section</label>
-				<select 
-					v-model="drawElem.section"
-				>
+				<select v-model="drawElem.section">
 					<option 
 						v-for="(sec, i) in sections" 
 						:key="sec.id"
@@ -249,8 +255,8 @@
 		<!-- Materials -->
 		<array-list
 			v-show="config.panel === 'materials'"
-			:headings="config.analysisFlag === 0 ? ['#', 'E', 'v', 'fy', 'γ'] : ['#', 'E']"
-			:widths="[4, 3, 3, 3, 3, 2]"		
+			:headings="config.analysisFlag === 0 ? ['#', 'E'] : ['#', 'E']"
+			:widths="[4, 3, 3, 3, 3, 2	]"		
 		>
 			<template slot="header">
 				<div style="display: flex; min-height: 26px">
@@ -392,6 +398,8 @@ export default {
 				significantFigures: 3,
 				display: false,
 				diagramScale: 1,
+				diagramSegments: 6,
+				diagramType: 1,
 				displacedShapeDiagrams: false,
         elementForces: true,
 				elementLoads: true,
@@ -399,13 +407,14 @@ export default {
 				diagramValues: false,
 				mode: 'navigate',
 				panel: 'nodes',
-        nodeLabels: true,
+				nodeLabels: true,
+				nodeResults: 1,
         x: 256,
         y: 200,
         reactions: true,
 				scale: 3,
 				scaleMin: 0.01,
-				scaleMax: 20,
+				scaleMax: 40,
 				shearDiagrams: false,
 				snapIncrement: 1,
 				supports: true,
@@ -428,6 +437,7 @@ export default {
 				releases: [false, false]
 			},
 			elements: [],
+			input: {},
 			materials: [],
 			nextNodeId: 1,
 			nextElementId: 1,
@@ -453,11 +463,6 @@ export default {
 				return this.nodes.length * 2
 			}
 			return this.nodes.length * 3
-			// let count = 0;
-			// for (let i = 0; i < this.nodes.length; i++) {
-			// 	count += this.nodeDOF[i].length;
-			// }
-			// return count;
 		},
 
 		concentratedLoads () {
@@ -465,35 +470,20 @@ export default {
 				return this.nodes.map(node => node.loads.slice(0, -1))
 			}
 			return this.nodes.map(node => node.loads)
-			// console.log("start conc")
-			// let arr = [];
-			// for (let i = 0; i < this.nodes.length; i++) {
-			// 	let node = this.nodes[i];
-			// 	let row = [...node.loads];
-			// 	for (let j = 0; j < this.nodeDOF[i].length - 3; j++) {
-			// 		row.push(0);
-			// 	}
-			// 	arr.push(row)
-			// }
-			// return arr;
 		},
 
 		fixity () {
 			if (this.config.analysisFlag === 1) {
-				return this.nodes.map(node => [(node.fixity[0]) ? 0 : NaN, (node.fixity[1]) ? 0 : NaN])
+				return this.nodes.map(node => [
+					node.fixity[0] ? 0 : NaN, 
+					node.fixity[1] ? 0 : NaN
+				])
 			}
-			return this.nodes.map(node => [(node.fixity[0]) ? 0 : NaN, (node.fixity[1]) ? 0 : NaN, (node.fixity[2]) ? 0 : NaN])
-			// console.log("start fixity")
-			// let fixity = [];
-			// for (let i = 0; i < this.nodes.length; i++) {
-			// 	let node = this.nodes[i];
-			// 	let arr = [(node.fixity[0]) ? 0 : NaN, (node.fixity[1]) ? 0 : NaN, (node.fixity[2]) ? 0 : NaN];
-			// 	for (let j = 0; j < this.nodeDOF[i].length - 3; j++) {
-			// 		arr.push(NaN);
-			// 	}
-			// 	fixity.push(arr)
-			// }
-			// return fixity;
+			return this.nodes.map(node => [
+				node.fixity[0] ? 0 : NaN, 
+				node.fixity[1] ? 0 : NaN, 
+				node.fixity[2] ? 0 : NaN
+			])
 		},
 
 		fixityReshaped () {
@@ -538,24 +528,6 @@ export default {
 				return this.nodes.map((node, i) => [2*i, 2*i + 1])
 			}
 			return this.nodes.map((node, i) => [3*i, 3*i + 1, 3*i + 2])
-			// console.log("start")
-			// let arr = [];
-			// let n = 0;
-			// let node;
-			// let nElements = 0;
-			// let nReleases = 0;
-			// for (let i = 0; i < this.nodes.length; i++) {
-			// 	let dof = []
-			// 	node = this.nodes[i];
-			// 	dof.push(n++);
-			// 	dof.push(n++);
-			// 	if (this.nReleases[i] < this.nElements[i]) dof.push(n++);
-			// 	for (let j = 0; j < this.nReleases[i]; j++) dof.push(n++)
-			// 	console.log(dof);
-			// 	arr.push(dof);
-			// }
-			// console.log("done")
-			// return arr;
 		},
 
 		/**********************/
@@ -568,48 +540,6 @@ export default {
 
 		elementDOF () {
 			return this.elementEnds.map(ends => this.nodeDOF[ends[0]].concat(this.nodeDOF[ends[1]]))
-			// let arr = [];
-			// let nReleases = [...this.nReleases];
-			// for (let i = 0; i < this.elements.length; i++) {
-			// 	let elem = this.elements[i];
-			// 	let ends = elem.ends;
-			// 	let d0 = this.nodeDOF[ends[0]]
-			// 	let n0 = this.nodes[ends[0]]
-			// 	let d1 = this.nodeDOF[ends[1]]
-			// 	let n1 = this.nodes[ends[1]]
-			// 	let dof = [];
-
-			// 	dof.push(d0[0])
-			// 	dof.push(d0[1])
-
-			// 	let offset = 0;
-			// 	// if start is released
-			// 	if (elem.releases[0]) {
-			// 		// if rigid connection exists
-			// 		if (this.nReleases[ends[0]] < this.nElements[ends[0]]) {
-			// 			nReleases[ends[0]]--;
-			// 			offset = this.nReleases[ends[0]] - nReleases[ends[0]];
-			// 		}
-			// 	}
-			// 	dof.push(d0[2 + offset]);
-
-			// 	dof.push(d1[0])
-			// 	dof.push(d1[1])
-				
-			// 	offset = 0;
-			// 	// if end is released
-			// 	if (elem.releases[1]) {
-			// 		// if rigid connection exists
-			// 		if (this.nReleases[ends[1]] < this.nElements[ends[1]]) {
-			// 			nReleases[ends[1]]--;
-			// 			offset = this.nReleases[ends[1]] - nReleases[ends[1]];
-			// 		}
-			// 	}
-			// 	dof.push(d1[2 + offset]);
-
-			// 	arr.push(dof)
-			// }
-			// return arr;
 		},
 
 		elementLengths () {
@@ -633,7 +563,12 @@ export default {
 		},
 
 		elementFixedEndForcesGlobal () {
-			return this.elementFixedEndForcesLocal.map((forces, i) => math.multiply(math.transpose(this.elementTransformations[i]), forces))
+			return this.elementFixedEndForcesLocal.map((forces, i) => 
+				math.multiply(
+					math.transpose(this.elementTransformations[i]), 
+					forces
+				)
+			)
 		},
 
 		/****************/
@@ -641,18 +576,42 @@ export default {
 		/****************/
 
 		pF () {
-			return math.subset(math.reshape(this.concentratedLoads, [this.nDOF, 1]), math.index(this.degF, 0));
+			if (this.degF.length === 0) return [];
+			return math.subset(
+				math.reshape(
+					this.concentratedLoads, 
+					[this.nDOF, 1]
+				), 
+				math.index(this.degF, 0)
+			);
 		},
 
 		pS () {
-			return math.subset(math.reshape(this.concentratedLoads, [this.nDOF, 1]), math.index(this.degS, 0));
+			return math.subset(
+				math.reshape(
+					this.concentratedLoads, 
+					[this.nDOF, 1]
+				), 
+				math.index(this.degS, 0)
+			);
 		},
 
 		fef () {
-			return this.elementFixedEndForcesGlobal.reduce((F, f, i) => math.subset(F, math.index(this.elementDOF[i], 0), math.add(math.subset(F, math.index(this.elementDOF[i], 0)), f)), math.zeros(this.nDOF, 1))
+			return this.elementFixedEndForcesGlobal.reduce((F, f, i) => 
+					math.subset(
+						F, 
+						math.index(this.elementDOF[i], 0), 
+						math.add(
+							math.subset(F, math.index(this.elementDOF[i], 0)), 
+							f
+						)
+					), 
+					math.zeros(this.nDOF, 1)
+			)
 		},
 
 		fefF () {
+			if (this.degF.length === 0) return [];
 			return math.subset(this.fef, math.index(this.degF, 0))
 		},
 
@@ -684,7 +643,7 @@ export default {
 		},
 
 		kSF () {
-			if (this.kAssembled.length === 0 || this.degF.length === 0) return []
+			if (this.kAssembled.length === 0 || this.degF.length === 0 || this.degS.length === 0) return []
 			return math.subset(this.kAssembled, math.index(this.degS, this.degF))
 		},
 
@@ -693,7 +652,11 @@ export default {
 		},
 
 		isUnstable () {
-			return this.condEst > 12 || isNaN(this.condEst) || this.condEst < 0
+			return this.condEst > 12 
+					|| this.condEst === 0 
+					|| isNaN(this.condEst) 
+					|| this.condEst < 0 
+					|| this.degF.length < 1
 		},
 
 		/***********/
@@ -702,14 +665,27 @@ export default {
 
 		dF () {
 			if (this.isUnstable) return null
-			// return this.debounceSolve();
+			if (this.degF.length === 1) {
+				return math.lusolve([[this.kFF]], [[math.subtract(this.pF, this.fefF)]])
+			}
 			return math.lusolve(this.kFF, math.subtract(this.pF, this.fefF))
 		},
 
 		d () {
 			if (this.isUnstable) return null
-			let del = math.subset(math.zeros(this.nDOF, 1), math.index(this.degF, 0), math.matrix(this.dF));
-			return del
+			if (this.degF.length === 1) {
+				return math.subset(
+					math.zeros(this.nDOF, 1), 
+					math.index(this.degF, 0), 
+					this.dF[0][0]
+				);
+			} else {
+				return math.subset(
+					math.zeros(this.nDOF, 1), 
+					math.index(this.degF, 0), 
+					math.matrix(this.dF)
+				);
+			}
 		},
 
 		fS () {
@@ -727,7 +703,12 @@ export default {
 		/***********/
 
 		displacements () {
-			if (this.isUnstable) return this.nodes.map(e => [NaN, NaN, NaN])
+			if (this.isUnstable) {
+				if (this.config.analysisFlag === 1) {
+					return this.nodes.map(e => [NaN, NaN]) 
+				}
+				return this.nodes.map(e => [NaN, NaN, NaN]) 
+			}
 			if (this.config.analysisFlag === 1) {
 				return math.reshape(this.d, [this.nodes.length, 2])._data
 			}
@@ -744,7 +725,20 @@ export default {
 
 		elementForces () {
 			if (this.isUnstable) return this.elements.map(e => [NaN, NaN, NaN, NaN, NaN, NaN])
-			return this.elementStiffnessMatricesLocal.map((k, i) => math.transpose(math.add(math.multiply(k, this.elementTransformations[i], math.subset(this.d, math.index(this.elementDOF[i], 0))   ), this.elementFixedEndForcesLocal[i]))._data[0])
+			return this.elementStiffnessMatricesLocal.map((k, i) => 
+				math.transpose(
+					math.add(
+						math.multiply(
+							k, 
+							this.elementTransformations[i], 
+							math.subset(
+								this.d, 
+								math.index(this.elementDOF[i], 0)
+							) 
+						), 
+						this.elementFixedEndForcesLocal[i]
+					)
+				)._data[0])
 		},
 
 		elementAxials () {
@@ -756,6 +750,15 @@ export default {
 
 		elementDisplacements () {
 			return this.elementEnds.map((elem, i) => this.displacements[elem[0]].concat(this.displacements[elem[1]]))
+		},
+
+		elementDisplacementsLocal () {
+			return this.elementDisplacements.map((d, i) => 
+				math.multiply(
+					this.elementTransformations[i], 
+					d
+				)
+			)
 		},
 
 		/*****************/
@@ -793,17 +796,14 @@ export default {
 			let max = 0;
 			let endForces = math.number(this.elementForces);
 			for (let i = 0; i < this.elements.length; i++) {
-				if (math.larger(math.abs(endForces[i][2]), max)) {
-					max = math.abs(endForces[i][2]);
-				}
-				if (math.larger(math.abs(endForces[i][5]), max)) {
-					max = math.abs(endForces[i][5]);			
-				}
-				if (this.elements[i].w !== 0) {
-					let midMax = math.abs(math.pow(math.number(endForces[i][1]), 2) / (2 * this.elements[i].w) - endForces[i][2]);
-					if (math.larger(midMax, max)) {
-						max = midMax;
-					}
+				max = math.max(math.abs(endForces[i][2]), max);			
+				max = math.max(math.abs(endForces[i][5]), max);
+				if (this.elements[i].w[1] !== 0) {
+					let x = this.elementLengths[i] / 2;
+					let midValue = -endForces[i][2] // -M
+          	+ endForces[i][1] * x // V*x
+          	+ this.elements[i].w[1]/2 * x**2; // 0.5w*x^2
+					max = math.max(math.abs(midValue), max);
 				}
 			}
 			return max;
@@ -816,28 +816,97 @@ export default {
 			let max = 0;
 			let endForces = math.number(this.elementForces);
 			for (let i = 0; i < this.elements.length; i++) {
-				if (math.larger(math.abs(endForces[i][1]), max)) {
-					max = math.abs(endForces[i][1]);
-				}
-				if (math.larger(math.abs(endForces[i][4]), max)) {
-					max = math.abs(endForces[i][4]);			
+				max = math.max(math.abs(endForces[i][1]), max);			
+				max = math.max(math.abs(endForces[i][4]), max);			
+			}
+			return max;
+		},
+
+		elementMaxLoad() {
+			let max = 0;
+			let elems = this.elements;
+			for (let i = 0; i < elems.length; i++) {
+				max = math.max(math.abs(elems[i].w[1]), max);
+			}
+			return max;
+		},
+
+		elementMaxDisp() {
+			if (this.config.analysisFlag === 1) {
+				return 1;
+			}
+			let max = 0;
+			let endForces = this.elementForces;
+			let endDisps = this.elementDisplacementsLocal;
+			for (let i = 0; i < this.elements.length; i++) {
+				
+				max = math.max(math.abs(endDisps[i][1]), max);
+				max = math.max(math.abs(endDisps[i][4]), max);
+				
+				if (this.elements[i].w[1] !== 0) {
+					let x = this.elementLengths[i] / 2;
+					let midValue = endDisps[i][1] 
+						+ endDisps[i][2] * x // -theta
+						+ (-endForces[i][2]/2 * x**2
+						+ endForces[i][1]/6 * x**3 // V*x
+						+ this.elements[i].w[1]/24 * x**4) // 0.5w*x^2
+						/ this.materials[this.elements[i].material].E
+						/ this.sections[this.elements[i].section].Iz
+					max = math.max(math.abs(midValue), max);
 				}
 			}
 			return max;
 		},
 
-		momentDiagramAutoScale () {
-			return (this.elementMaxMoment === 0) ? 1 : 45 / this.elementMaxMoment;
+		elementMaxRotation() {
+			if (this.config.analysisFlag === 1) {
+				return 1;
+			}
+			let max = 0;
+			let endForces = this.elementForces;
+			let endDisps = this.elementDisplacementsLocal;
+			for (let i = 0; i < this.elements.length; i++) {
+				
+				max = math.max(math.abs(endDisps[i][2]), max);
+				max = math.max(math.abs(endDisps[i][5]), max);
+				
+				if (this.elements[i].w[1] !== 0) {
+					let x = this.elementLengths[i] / 2;
+					let midValue = endDisps[i][2] // -theta
+						+ (-endForces[i][2] * x
+						+ 0.5 * endForces[i][1] * x**2 // V*x
+						+ this.elements[i].w[1]/6 * x**3) // 0.5w*x^2
+						/ this.materials[this.elements[i].material].E
+						/ this.sections[this.elements[i].section].Iz
+					max = math.max(math.abs(midValue), max);
+				}
+			}
+			return max;
 		},
 
-		shearDiagramAutoScale () {
-			return (this.elementMaxShear === 0) ? 1 : 45 / this.elementMaxShear;
+		diagramScales() {
+			return {
+				w: (this.elementMaxLoad === 0) ? 1 : 45 / this.elementMaxLoad,
+				v: (this.elementMaxShear === 0) ? 1 : 45 / this.elementMaxShear,
+				m: (this.elementMaxMoment === 0) ? 1 : 45 / this.elementMaxMoment,
+				r: (this.elementMaxRotation === 0) ? 1 : 45 / this.elementMaxRotation,
+				d: (this.elementMaxDisp === 0) ? 1 : 45 / this.elementMaxDisp,
+			}
 		},
 
 	},
 	created: function () {
 		this.initProperties();
 		this.initStructure();
+		window.addEventListener("beforeunload", function(e) {
+			e = e || window.event;
+			// For IE and Firefox prior to version 4
+			if (e) {
+					e.returnValue = 'Sure?';
+			}
+			// For Safari
+			return 'Sure?';
+		});
 	},
 	mounted: function () {
 		// this.config.canvasW = this.getCanvasWidth();
@@ -845,6 +914,7 @@ export default {
 		// this.config.x = this.config.canvasW / 2;
 		// this.config.y = this.config.canvasH / 2;
 		window.addEventListener("resize", this.resizeWindow);
+		
 	},
 	methods: {
 
@@ -893,29 +963,31 @@ export default {
 
 			// bridge
 			this.addNodes([
-				{coords: [0, 0], fixity: [true, true, false],},
-				{coords: [250, 0],},
-				{coords: [250, 250],},
-				{coords: [500, 0],loads: [10, -20, 0]},
-				{coords: [500, 250],},
-				{coords: [750, 0],},
-				{coords: [750, 250],},
-				{coords: [1000, 0],fixity: [false, true, false],},
+				{coords: [0, 0], fixity: [true, true, true],},
+				// {coords: [250, 0],},
+				// {coords: [250, 250],},
+				// {coords: [500, 0],loads: [10, -20, 0]},
+				// {coords: [500, 250],},
+				// {coords: [750, 0],},
+				// {coords: [750, 250],},
+				{coords: [500, 0],fixity: [false, false, false]},
+				{coords: [1000, 0],fixity: [false, false, false]},
 			]);
-			this.addElement({ ends: [0, 1]});
-			this.addElement({ ends: [0, 2]});
-			this.addElement({ ends: [1, 2]});
-			this.addElement({ ends: [1, 3]});
-			this.addElement({ ends: [2, 3]});
-			this.addElement({ ends: [2, 4]});
-			this.addElement({ ends: [3, 4]});
-			this.addElement({ ends: [3, 5]});
-			this.addElement({ ends: [3, 6]});
-			this.addElement({ ends: [4, 6]});
-			this.addElement({ ends: [5, 6]});
-			this.addElement({ ends: [5, 7]});
-			this.addElement({ ends: [6, 7]});
-			this.config.analysisFlag = 1;
+			this.addElement({ ends: [0, 1], w: [0, 1] });
+			this.addElement({ ends: [1, 2], w: [0, 1] });
+			// this.addElement({ ends: [0, 2]});
+			// this.addElement({ ends: [1, 2]});
+			// this.addElement({ ends: [1, 3]});
+			// this.addElement({ ends: [2, 3]});
+			// this.addElement({ ends: [2, 4]});
+			// this.addElement({ ends: [3, 4]});
+			// this.addElement({ ends: [3, 5]});
+			// this.addElement({ ends: [3, 6]});
+			// this.addElement({ ends: [4, 6]});
+			// this.addElement({ ends: [5, 6]});
+			// this.addElement({ ends: [5, 7]});
+			// this.addElement({ ends: [6, 7]});
+			this.config.analysisFlag = 0;
 		},
 
 		/********************/
@@ -954,7 +1026,17 @@ export default {
 			let sec = this.sections[elem.section]
 			let e = mat.E;
 			let a = sec.A;
+
+			let k;
 			
+			if (this.config.analysisFlag === 1) {
+				k = [
+					[a, -a],
+					[-a, a],
+				];
+				return math.multiply(k, e / l);
+			}
+
 			let il2 = 12 * sec.Iz / l ** 2;
 			let il = 6* sec.Iz / l;
 			let i2 = 2 * sec.Iz;
@@ -964,18 +1046,8 @@ export default {
 			let i3l = 3 * sec.Iz / l;
 			let i3 = 3 * sec.Iz;
 
-			let k;
-
-			if (this.config.analysisFlag === 1) {
-				k = [
-					[a, -a],
-					[-a, a],
-				];
-				return math.multiply(k, e / l);
-				// return math.multiply(k, math.divide(e, l));
-			}
-
-			if (elem.releases[0] && elem.releases[1]) {	// pinned-pinned
+			if (elem.releases[0] && elem.releases[1]) {	
+				// pinned-pinned
 				k = [
 					[a, 0, 0, -a, 0, 0],
 					[0, 0, 0, 0, 0, 0],
@@ -984,7 +1056,8 @@ export default {
 					[0, 0, 0, 0, 0, 0],
 					[0, 0, 0, 0, 0, 0],
 				]
-			} else if (!elem.releases[0] && elem.releases[1]) {	// fixed-pinned
+			} else if (!elem.releases[0] && elem.releases[1]) {	
+				// fixed-pinned
 				k = [
 					[a, 0, 0, -a, 0, 0],
 					[0, i3l2, i3l, 0, -i3l2, 0],
@@ -993,7 +1066,8 @@ export default {
 					[0, -i3l2, -i3l, 0, i3l2, 0],
 					[0, 0, 0, 0, 0, 0],
 				]
-			} else if (elem.releases[0] && !elem.releases[1]) {	// pinned-fixed
+			} else if (elem.releases[0] && !elem.releases[1]) {	
+				// pinned-fixed
 				k = [
 					[a, 0, 0, -a, 0, 0],
 					[0, i3l2, 0, 0, -i3l2, i3l],
@@ -1002,7 +1076,8 @@ export default {
 					[0, -i3l2, 0, 0, i3l2, -i3l],
 					[0, i3l, 0, 0, -i3l, i3],
 				]
-			} else {	// fixed-fixed
+			} else {	
+				// fixed-fixed
 				k = [
 					[a, 0, 0, -a, 0, 0],
 					[0, il2, il, 0, -il2, il],
@@ -1026,13 +1101,13 @@ export default {
 			let l = this.elementLengths[i];
 			if (this.config.analysisFlag === 1) {
 				return [
-					[-wx/2],
-					[-wx/2]
+					[-wx*l/2],
+					[-wx*l/2]
 				]
 			}
 			return [
-				[-wx/2], [-wy*l/2], [-wy*l*l/12],
-				[-wx/2], [-wy*l/2], [wy*l*l/12]
+				[-wx*l/2], [-wy*l/2], [-wy*l*l/12],
+				[-wx*l/2], [-wy*l/2], [wy*l*l/12]
 			]
 		},
 
@@ -1042,6 +1117,7 @@ export default {
 
 		// Estimates the condition number of the assembled stiffness matrix. 
 		estimateCondition(A) {
+			if (this.degF.length < 2) return 2;
 			let n = math.subset(math.size(A), math.index(0))
 			// Check if matrix is empty
 			if (n < 1) return 1e20;
@@ -1289,12 +1365,14 @@ export default {
 		},
 
 		handleMouseDown(evt, i) {
+			console.log("mouse down")
 			switch(this.config.mode) {
 				case 'navigate':
 					this.panOn(evt);
 					break;
 				case 'draw-node':
-					let rect = this.$refs.canvas.getBoundingClientRect();
+					let rect = this.$refs.canvasContainer.$refs.canvas.getBoundingClientRect();
+					// let rect = this.$refs.canvas.getBoundingClientRect();
 					let x = Math.round((evt.x - rect.x - this.config.x) / this.config.scale / this.config.snapIncrement) * this.config.snapIncrement;
 					let y = -Math.round((evt.y - rect.y - this.config.y) / this.config.scale / this.config.snapIncrement) * this.config.snapIncrement;
 					this.addNode({ 
@@ -1323,6 +1401,53 @@ export default {
 					}
 					break;
 			}
+		},
+
+		handleMouseDown2(evt, rgba) {
+			switch(this.config.mode) {
+				case 'navigate':
+					this.panOn(evt);
+					break;
+				case 'draw-node':
+					this.drawNode(evt.x, evt.y);
+					break;
+				case 'draw-elem':
+					if (rgba[0] === 254 && rgba[1] === 254) {
+						let i = rgba[2]
+						if (this.drawElem.ends[0] === null) {
+							this.drawElem.ends[0] = i;
+							this.nodes[i].active = true;
+						} else if (this.nodes[i].id !== this.nodes[this.drawElem.ends[0]].id) {
+							this.drawElem.ends[1] = i;
+							this.addElement({
+								ends: [...this.drawElem.ends],
+								releases: [...this.drawElem.releases],
+								material: 0,
+								section: 0,
+							})
+							this.nodes[this.drawElem.ends[0]].active = false;
+							this.drawElem.ends = [null, null];	
+						}
+					} else if (this.drawElem.ends[0] !== null) {
+						// clear selected nodes
+						this.nodes[this.drawElem.ends[0]].active = false;
+						this.drawElem.ends = [null, null];
+					}
+					break;
+			}
+		},
+
+		handleMouseMove(evt) {
+			this.cursor.x = Math.round(evt.x / this.config.snapIncrement) * this.config.snapIncrement
+			this.cursor.y = Math.round(evt.y / this.config.snapIncrement) * this.config.snapIncrement
+		},
+
+		drawNode(x, y) {
+			// x = Math.round(x / this.config.snapIncrement) * this.config.snapIncrement;
+			// y = Math.round(y / this.config.snapIncrement) * this.config.snapIncrement;
+			this.addNode({ 
+				coords: [this.cursor.x, this.cursor.y],
+			});
 		},
 
 		// Enables panning via mouse, and stores initial pan location
@@ -1417,12 +1542,20 @@ export default {
 				ymin = Math.min(ymin, node.coords[1])
 				ymax = Math.max(ymax, node.coords[1])
 			}
-			let xScale = this.config.canvasW / (xmax - xmin);
-			let yScale = this.config.canvasH / (ymax - ymin);
-			this.config.scale = math.round(0.95 * Math.min(xScale, yScale), 3);
+			// let xScale = this.config.canvasW / (xmax - xmin);
+			// let yScale = this.config.canvasH / (ymax - ymin);
+			// this.config.scale = math.round(0.95 * Math.min(xScale, yScale), 3);
 
-			this.config.x = -(xmin + xmax) / 2 * this.config.scale + this.config.canvasW / 2;
-			this.config.y = (ymin + ymax) / 2 * this.config.scale + this.config.canvasH / 2;
+			// this.config.x = -(xmin + xmax) / 2 * this.config.scale + this.config.canvasW / 2;
+			// this.config.y = (ymin + ymax) / 2 * this.config.scale + this.config.canvasH / 2;
+			this.input = {
+				command: "zoom-fit",
+				x: (xmin + xmax) / 2,
+				y: (ymin + ymax) / 2,
+				z: 10 * (Math.max(xmax - xmin, ymax-ymin)),
+				width: xmax-xmin,
+				height: ymax-ymin
+			}
 		},
 		
 	},
@@ -1530,17 +1663,19 @@ body {
 	z-index: 2;
 	#canvas-settings {
 		align-items: center;
-		background-color: #21252988;
+		background-color: #3e3e3e3e;
+		border: solid 1px #3e3e3e;
 		display: grid;
 		font-size: .75rem;
 		gap: .25rem .25rem;
-		grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
-		max-width: 40rem;
+		grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+		max-width: 30rem;
 		padding: .5rem 1rem;
 		pointer-events: auto;
 		width: 100vw;
 		input[type=number] {
 			height: 1.5rem;
+			text-align: left;
 		}
 	}
 }

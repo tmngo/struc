@@ -1,6 +1,6 @@
 <template>
   <div 
-    v-show="notupdating"
+    v-show="updated"
     class="node-label"
     :style="style"
   >
@@ -39,37 +39,42 @@ export default {
     offsetY: {
       type: Number,
       default: 0,
+    },
+    opacity: {
+      type: Number,
+      default: 0,
     }
   },
   data() {
     return {
-      notupdating: true,
+      updated: false,
       screenVector: null,
       top: 0,
       left: 0,
+      showText: false,
       debounceUpdate: debounce(function() {
         this.update();
-        this.notupdating = true;
+        this.updated = true;
       }, 50)
     }
   },
   watch: {
     coords: {
       handler: function() {
-        this.notupdating = false;
+        this.updated = false;
         this.debounceUpdate();
       },
     },
     viewport: {
       handler: function() {
-        this.notupdating = false;
+        this.updated = false;
         this.debounceUpdate();
       },
       deep: true,
     },
     transform: {
       handler: function() {
-        this.notupdating = false;
+        this.updated = false;
         this.debounceUpdate();
       },
       deep: true,
@@ -86,12 +91,14 @@ export default {
         transform: `translate(${-50}%,${-50}%) 
             rotate(${this.rotation}rad) 
             translate(${this.offsetX}%,${this.offsetY}%)`,
+        'background-color': `rgba(32,32,32,${this.opacity})`,
       }
     },
   },
   created() {
   },
   mounted() {
+    this.debounceUpdate();
   },
   destroyed() {
   },
@@ -115,4 +122,8 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped lang="scss">
+div {
+  color: #ffffff30;
+  width: min-content;
+}
 </style>

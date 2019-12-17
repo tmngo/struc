@@ -8,7 +8,7 @@
             <label>Analysis mode</label>
             <select 
               class="cell cell-input form-control form-control-sm" 
-              style="width: 70%; height: 1.5rem; font-size: .75rem"
+              style="height: 1.5rem; font-size: .75rem"
               v-model="config.analysisFlag"
             >
               <option :value="0">Frame</option>	
@@ -16,7 +16,7 @@
             </select>
           </div>
 
-          <div>
+          <!-- <div>
             <label for="zoom">Zoom (scroll canvas)</label>
             <input 
               id="zoom"
@@ -25,15 +25,15 @@
               min="0" :max="config.scaleMax"
               step="0.001"
               v-model.number="config.scale"
-              style="width: 70%; height: 1.5rem; font-size: .75rem"
+              style="height: 1.5rem; font-size: .75rem"
             >
-          </div>
+          </div> -->
           
           <div>
             <label for="sigfigs">Signifiicant figures</label>
             <input 
               id="sigfigs"
-                style="width: 70%; height: 1.5rem; font-size: .75rem"
+                style="height: 1.5rem; font-size: .75rem"
                 type="number" 
                 class="form-control form-control-sm" 
                 min="1" max="9" 
@@ -45,13 +45,56 @@
             <label>Diagram scale</label>
             <div>
               <input 
-                  style="width: 70%; height: 1.5rem; font-size: .75rem"
-                  type="number" 
-                  class="form-control form-control-sm" 
-                  step="0.1"
-                  v-model.number="config.diagramScale"
+                style="height: 1.5rem; font-size: .75rem"
+                type="number" 
+                class="form-control form-control-sm" 
+                step="0.1"
+                v-model.number="config.diagramScale"
               >
             </div>
+          </div>
+
+          <div>
+            <label>Diagram segments</label>
+            <div>
+              <input 
+                style="height: 1.5rem; font-size: .75rem"
+                type="number" 
+                class="form-control form-control-sm" 
+                step="1"
+                min="1"
+                v-model.number="config.diagramSegments"
+              >
+            </div>
+          </div>
+
+          <div>
+            <label>Element diagrams</label>
+            <select 
+              class="cell cell-input form-control form-control-sm" 
+              style="height: 1.5rem; font-size: .75rem"
+              v-model="config.diagramType"
+            >
+              <option :value="0">None</option>
+              <option :value="1">Distributed load</option>	
+              <option :value="2">Shear force</option>
+              <option :value="3">Bending moment</option>
+              <option :value="4">Rotation</option>
+              <option :value="5">Displacement</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Node results</label>
+            <select 
+              class="cell cell-input form-control form-control-sm" 
+              style="height: 1.5rem; font-size: .75rem"
+              v-model="config.nodeResults"
+            >
+              <option :value="0">None</option>
+              <option :value="1">Reactions</option>	
+              <option :value="2">Displacements</option>
+            </select>
           </div>
 
           <input-checkbox :object="config" style="grid-column-start: 1"
@@ -63,34 +106,12 @@
               :label="'Nodal loads'"
           ></input-checkbox>
           <input-checkbox :object="config" 
-              :setting="'elementLoads'" 
-              :label="'Distributed loads'"
-          ></input-checkbox>
-          <input-checkbox :object="config" 
               :setting="'supports'" 
               :label="'Supports'"
           ></input-checkbox>
           <input-checkbox :object="config" 
               :setting="'elementForces'" 
               :label="'Axial forces'"
-          ></input-checkbox>
-          <input-checkbox :object="config" 
-              :setting="'reactions'" 
-              :label="'Reactions'"
-          ></input-checkbox>
-          <input-checkbox :object="config" 
-              :setting="'displacements'" 
-              :label="'Displacements'"
-          ></input-checkbox>
-          <input-checkbox :object="config" 
-            v-show="config.analysisFlag === 0"
-            :setting="'shearDiagrams'" 
-            :label="'Shear diagrams'"
-          ></input-checkbox>
-          <input-checkbox :object="config" 
-            v-show="config.analysisFlag === 0"
-            :setting="'momentDiagrams'" 
-            :label="'Moment diagrams'"
           ></input-checkbox>
           <input-checkbox :object="config" 
             v-show="config.analysisFlag === 0"

@@ -6,12 +6,25 @@ export default {
   name: 'BabylonDiagram',
   inject: ['SceneReady'],
   props: {
-    forcesEnd: Array,
+    config: Object,
     coords: Array,
+    fixity: Array,
+    forcesEnd: Array,
+    dispsEnd: Array,
+    section: Object,
+    material: Object,
+    n: {
+      type: Number,
+    },
     renderingGroup: Number,
     scale: {
       type: Number,
       default: 1,
+    },
+    diagramScales: Object,
+    type: Number,
+    w: {
+      type: Array,
     },
   },
   data() {
@@ -21,13 +34,29 @@ export default {
     }
   },
   watch: {
+    n: {
+      handler: function() {
+        this.replace();
+      },
+    },
+    fixity: {
+      handler: function() {
+        this.update();
+      },
+      deep: true,
+    },
     elements: {
       handler: function() {
         this.replace();
       },
       deep: true,
     },
-    scale: {
+    'config.diagramScale': {
+      handler: function() {
+        this.update();
+      },
+    },
+    w: {
       handler: function() {
         this.update();
       },
@@ -46,53 +75,166 @@ export default {
     y1() {
       return this.coords[1][1];
     },
+    dx() {
+      return this.coords[1][0] - this.coords[0][0];
+    },
+    dy() {
+      return this.coords[1][1] - this.coords[0][1];
+    },
     l() {
       return Math.sqrt((this.x1-this.x0)**2 + (this.y1-this.y0)**2);
     },
-    startX() {
-			let x = this.x0 - this.forcesEnd[2] * this.xPerp;
-			return isNaN(x) ? 0 : x;
-		},
-		startY() {
-			let y = this.y0 - this.forcesEnd[2] * this.yPerp;
-			return isNaN(y) ? 0 : y;
+    totalScale () {
+      return this.scale * this.config.diagramScale * this.typeScales[this.type];
     },
-    xPerp () {
-			return (this.y0 - this.y1) / (this.l) * this.scale ;
+    xT () {
+			return (this.y0 - this.y1) / (this.l) * this.totalScale;
 		},
-		yPerp () {
-			return (this.x1 - this.x0) / (this.l) * this.scale;
-		},
-    lines() {
+		yT () {
+			return (this.x1 - this.x0) / (this.l) * this.totalScale;
+    },
+    typeScales() {
       return [
-        // Fx
+        1, 
+        this.diagramScales.w/2, 
+        this.diagramScales.v, 
+        this.diagramScales.m, 
+        this.diagramScales.r, 
+        this.diagramScales.d
+      ]
+    },
+    EI() {
+      return this.material.E * this.section.Iz;
+    },
+    values() {
+      switch (this.type) {
+        case 0:
+          return []
+        case 1:
+          return this.loadValues;
+        case 2: 
+          return this.shearValues;
+        case 3: 
+          return this.momentValues;
+        case 4: 
+          return this.rotationValues;
+        case 5:
+          return this.dispValues;
+        default:
+          return [];
+          break;
+      }
+    },
+    loadValues() {
+      let arr = [this.w[1]];
+      for (let i = 1; i < this.n; i++) {
+        arr.push(this.w[1])
+      }
+      arr.push(this.w[1])
+      return arr;
+    },
+    momentValues() {
+      let arr = [-this.forcesEnd[2]];
+      for (let i = 1; i < this.n; i++) {
+        let x = i/this.n * this.l;
+        arr.push(
+          -this.forcesEnd[2] // -M
+          + this.forcesEnd[1] * x // V*x
+          + this.w[1]/2 * x**2, // 0.5w*x^2
+        )
+      }
+      arr.push(this.forcesEnd[5])
+      return arr;
+    },
+    curvatureValues() {
+      let arr = [-this.forcesEnd[2]/this.EI];
+      for (let i = 1; i < this.n; i++) {
+        let x = i/this.n * this.l;
+        arr.push(
+          (-this.forcesEnd[2] // -M
+          + this.forcesEnd[1] * x // V*x
+          + this.w[1]/2 * x**2) / this.EI // 0.5w*x^2
+        )
+      }
+      arr.push(this.forcesEnd[5] / this.EI)
+      return arr;
+    },
+    rotationValues() {
+      let arr = [this.dispsEnd[2]]
+      for (let i = 1; i < this.n; i++) {
+        let x = i/this.n * this.l;
+        arr.push(
+          this.dispsEnd[2] // -theta
+          + (-this.forcesEnd[2] * x
+          + 0.5 * this.forcesEnd[1] * x**2 // V*x
+          + this.w[1]/6 * x**3) // 0.5w*x^2
+          / this.EI
+        )
+      }
+      arr.push(this.dispsEnd[5])
+      return arr;
+    },
+    dispValues() {
+      let arr = [this.dispsEnd[1]]
+      for (let i = 1; i < this.n+1; i++) {
+        let x = i/this.n * this.l;
+        arr.push(
+          this.dispsEnd[1] 
+          + this.dispsEnd[2] * x // -theta
+          + (-this.forcesEnd[2]/2 * x**2
+          + this.forcesEnd[1]/6 * x**3 // V*x
+          + this.w[1]/24 * x**4) // 0.5w*x^2
+          / this.EI 
+        )
+      }
+      return arr;
+    },
+    shearValues() {
+      let arr = [this.forcesEnd[1]];
+      for (let i = 1; i < this.n; i++) {
+        arr.push(
+          this.forcesEnd[1] // V
+          + this.w[1] * (i/this.n * this.l) // w*x
+        )
+      }
+      arr.push(-this.forcesEnd[4])
+      return arr;
+    },
+    lines() {
+      if (this.type === 0) {
+        return [];
+      }
+      // initial vertical line
+      let arr = [
         [
           new BABYLON.Vector3(this.x0, this.y0),
-          new BABYLON.Vector3(this.x1, this.y1)
+          new BABYLON.Vector3(this.x0 + this.xT * this.values[0], this.y0 + this.yT * this.values[0]),
         ],
+      ]
+      // line segments
+      for (let i = 0; i < this.n; i++) {
+        let j = i+1;
+        arr.push([
+            new BABYLON.Vector3(this.x0 + i/this.n*this.dx + this.xT * this.values[i], this.y0 + i/this.n*this.dy + this.yT * this.values[i]),
+            new BABYLON.Vector3(this.x0 + j/this.n*this.dx + this.xT * this.values[j], this.y0 + j/this.n*this.dy + this.yT * this.values[j]),
+          ])
+      }
+      // final vertical line
+      arr.push(
         [
-          new BABYLON.Vector3(this.x0, this.y0),
-          new BABYLON.Vector3(this.x0 + this.xPerp, this.y0 + this.yPerp)
-        ],
-        [
+          new BABYLON.Vector3(this.x1 + this.xT * this.values[this.n], this.y1 + this.yT * this.values[this.n]),
           new BABYLON.Vector3(this.x1, this.y1),
-          new BABYLON.Vector3(this.x1 + this.xPerp, this.y1 + this.yPerp)
         ],
-      ];
+      )
+      return arr;
     },
     colors() {
-      let magenta = new BABYLON.Color4(1,0,1,1);
-      return [
-        [magenta, magenta],
-        [magenta, magenta],
-        [magenta, magenta],
-        [magenta, magenta],
-        [magenta, magenta],
-        [magenta, magenta],
-        [magenta, magenta],
-        [magenta, magenta],
-        [magenta, magenta],
-      ];
+      let color = new BABYLON.Color4(0.2,0.8,0.7,1);
+      let arr = []
+      for (let i = 0; i < this.n+2; i++) {
+        arr.push([color, color])
+      }
+      return arr;
     },
     lineOptions() {
       return {

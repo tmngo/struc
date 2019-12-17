@@ -9,6 +9,7 @@ export default {
     coords: Array,
     fixity: Array,
     renderingGroup: Number,
+    analysisType: Number,
     scale: {
       type: Number,
       default: 1,
@@ -37,6 +38,11 @@ export default {
         this.replace();
       },
       deep: true,
+    },
+    analysisType: {
+      handler: function() {
+        this.replace();
+      },
     }
   },
   computed: {
@@ -44,9 +50,9 @@ export default {
 			return math.sqrt(this.node.loads[0]**2 + this.node.loads[1]**2);
 		},
     lines() {
-      return [
-        // Fx
-        [
+      let arr = [];
+      if (this.fixity[0]) {
+        arr.push([
           new BABYLON.Vector3(this.coords[0] - 0.25 * this.scale, this.coords[1], this.coords[2]),
           new BABYLON.Vector3(this.coords[0] - 1.2 * this.scale, this.coords[1], this.coords[2])
         ],
@@ -57,9 +63,10 @@ export default {
         [
           new BABYLON.Vector3(this.coords[0] - 0.25 * this.scale, this.coords[1], this.coords[2]),
           new BABYLON.Vector3(this.coords[0] - 0.5 * this.scale, this.coords[1] + 0.25 * this.scale, this.coords[2])
-        ],
-        // Fy
-        [
+        ])
+      }
+      if (this.fixity[1]) {
+        arr.push([
           new BABYLON.Vector3(this.coords[0], this.coords[1] - 0.25 * this.scale, this.coords[2]),
           new BABYLON.Vector3(this.coords[0], this.coords[1] - 1.2 * this.scale, this.coords[2])
         ],
@@ -70,21 +77,36 @@ export default {
         [
           new BABYLON.Vector3(this.coords[0], this.coords[1] - 0.25 * this.scale, this.coords[2]),
           new BABYLON.Vector3(this.coords[0] + 0.25 * this.scale, this.coords[1] - 0.5 * this.scale, this.coords[2])
-        ],
-        // Fz
-        [
-          new BABYLON.Vector3(this.coords[0], this.coords[1], this.coords[2] - 0.25 * this.scale),
-          new BABYLON.Vector3(this.coords[0], this.coords[1], this.coords[2] - 1.2 * this.scale)
-        ],
-        [
-          new BABYLON.Vector3(this.coords[0], this.coords[1], this.coords[2] - 0.25 * this.scale),
-          new BABYLON.Vector3(this.coords[0], this.coords[1] - 0.25 * this.scale, this.coords[2] - 0.5 * this.scale)
+        ])
+      }
+      if (this.fixity[2] && this.analysisType === 0) {
+        arr.push([
+          new BABYLON.Vector3(this.coords[0] - 0.1 * this.scale, this.coords[1] - 0.75 * this.scale, this.coords[2]),
+          new BABYLON.Vector3(this.coords[0] - 0.4 * this.scale, this.coords[1] - 0.75 * this.scale, this.coords[2])
         ],
         [
-          new BABYLON.Vector3(this.coords[0], this.coords[1], this.coords[2] - 0.25 * this.scale),
-          new BABYLON.Vector3(this.coords[0], this.coords[1] + 0.25 * this.scale, this.coords[2] - 0.5 * this.scale)
+          new BABYLON.Vector3(this.coords[0] - 0.4 * this.scale, this.coords[1] - 0.75 * this.scale, this.coords[2]),
+          new BABYLON.Vector3(this.coords[0] - 0.63 * this.scale, this.coords[1] - 0.63 * this.scale, this.coords[2])
         ],
-      ];
+        [
+          new BABYLON.Vector3(this.coords[0] - 0.63 * this.scale, this.coords[1] - 0.63 * this.scale, this.coords[2]),
+          new BABYLON.Vector3(this.coords[0] - 0.75 * this.scale, this.coords[1] - 0.4 * this.scale, this.coords[2])
+        ],
+        [
+          new BABYLON.Vector3(this.coords[0] - 0.75 * this.scale, this.coords[1] - 0.4 * this.scale, this.coords[2]),
+          new BABYLON.Vector3(this.coords[0] - 0.75 * this.scale, this.coords[1] - 0.1 * this.scale, this.coords[2])
+        ],
+        [
+          new BABYLON.Vector3(this.coords[0] - 0.1*this.scale, this.coords[1] - 0.75 * this.scale, this.coords[2]),
+          new BABYLON.Vector3(this.coords[0] - 0.35 * this.scale, this.coords[1] - 1 * this.scale, this.coords[2])
+        ],
+        [
+          new BABYLON.Vector3(this.coords[0] - 0.1*this.scale, this.coords[1] - 0.75 * this.scale, this.coords[2]),
+          new BABYLON.Vector3(this.coords[0] - 0.35 * this.scale, this.coords[1] - 0.5 * this.scale, this.coords[2])
+        ])
+      }
+
+      return arr;
     },
     colors() {
       let magenta = new BABYLON.Color4(1,0,1,1);
@@ -98,25 +120,28 @@ export default {
         [magenta, magenta],
         [magenta, magenta],
         [magenta, magenta],
+        [magenta, magenta],
+        [magenta, magenta],
+        [magenta, magenta],
       ];
     },
-    visibleLines() {
-      return this.lines.filter((line, i) => this.fixity[Math.floor(i / 3)], this);
-    },
-    visibleColors() {
-      return this.colors.filter((color, i) => this.fixity[Math.floor(i / 3)], this);
-    },
+    // visibleLines() {
+    //   return this.lines.filter((line, i) => this.fixity[Math.floor(i / 3)], this);
+    // },
+    // visibleColors() {
+    //   return this.colors.filter((color, i) => this.fixity[Math.floor(i / 3)], this);
+    // },
     lineOptions() {
       return {
-        lines: this.visibleLines,
-        colors: this.visibleColors,
+        lines: this.lines,
+        colors: this.colors,
         updatable: true,
       };
     },
     lineOptionsUpdate() {
       return {
-        lines: this.visibleLines,
-        colors: this.visibleColors,
+        lines: this.lines,
+        colors: this.colors,
         instance: this.mesh,
       };
     },

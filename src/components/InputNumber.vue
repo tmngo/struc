@@ -70,7 +70,7 @@ export default {
 			interval: null,
 			debounceInput: debounce((evt) => {
 				this.valueLocal = (evt.target.value === '') ? 0 : parseFloat(evt.target.value) 
-			}, 250),
+			}, 350),
 		};
 	},
 	computed: {
