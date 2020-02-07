@@ -1006,9 +1006,9 @@ export default {
 			let s = dy / l;
 			if (this.config.analysisFlag === 1) {
 				return [
-				[c, s, 0, 0], 
-				[0, 0, c, s], 
-			];
+					[c, s, 0, 0], 
+					[0, 0, c, s], 
+				];
 			}
 			return [
 				[c, s, 0, 0, 0, 0], 

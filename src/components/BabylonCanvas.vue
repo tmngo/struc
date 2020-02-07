@@ -521,6 +521,7 @@ export default {
       this.pointsData.positions = this.nodeVertices;
       this.pointsMesh.setVerticesData(BABYLON.VertexBuffer.ColorKind, this.nodeColors);
       this.pointsData.applyToMesh(this.pointsMesh); 
+      this.pointsMesh.renderingGroupId = 3;
     },
 
     updateLines() {
